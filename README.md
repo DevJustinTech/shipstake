@@ -45,6 +45,58 @@ backend/     FastAPI verifier — checks GitHub, signs checkIn() txs
 frontend/    Next.js app — wallet connect, create/verify/claim UI
 ```
 
+## Under the hood — engineering notes
+
+Things that took actual thought, and where to find them in the code:
+
+**Contract** (`contracts/contracts/CommitmentDevice.sol`)
+
+- Strict checks-effects-interactions: status and amount are zeroed *before*
+  the low-level `call` sends funds, in both `withdrawFulfilled` and
+  `claimFailedStake` — reentrancy-safe with no library dependency, and
+  `call` instead of `transfer` avoids the 2300-gas-stipend footgun with
+  contract recipients.
+- `claimFailedStake` is deliberately **permissionless**: if it were
+  creator-only, the creator could grief the beneficiary by never settling.
+  Anyone can pull the trigger after the deadline; the funds can only ever
+  go to the named beneficiary.
+- `checkIn` is deadline-gated onchain — even the trusted verifier cannot
+  rescue a commitment after time runs out. The trust boundary is "can
+  attest activity happened," never "can move money late."
+- Custom errors instead of require-strings, and a verifier rotation path
+  (`setVerifier`) so a leaked backend key doesn't strand active stakes.
+
+**Verifier** (`backend/`)
+
+- Async FastAPI; the sync web3 calls are pushed onto threads
+  (`asyncio.to_thread`) so a slow RPC never blocks the API or the sweep.
+- The 60s auto-verify sweep is idempotent and failure-isolated: it re-reads
+  onchain status before acting (a commitment settled some other way is just
+  marked done), and one repo's API error can't stall the loop for everyone
+  else.
+- OAuth tokens are capability-guarded: every endpoint that uses a stored
+  token demands the session secret minted at connect time. Knowing someone's
+  GitHub login gets you nothing — including on the activity-feed endpoint.
+- Repo visibility is validated **before** the stake transaction, so you
+  can't lock funds against a repo the verifier will never be able to read.
+
+**Frontend** (`frontend/src/`)
+
+- The commitment id comes from parsing the `CommitmentCreated` event out of
+  the tx receipt — not from re-reading `nextId`, which races under
+  concurrent creates.
+- Deadlines are validated client-side with a 10-minute buffer: wallet
+  confirmation and block inclusion eat real time between the form check and
+  the contract's own `deadline <= block.timestamp` check, and without the
+  buffer a tight deadline can revert after funds-approval friction.
+- The card mirrors the contract's state machine, with polling cadence per
+  source (15s chain, 30s GitHub feed). The contract zeroes `amount` on
+  settlement, so the original stake is cached locally at creation to keep
+  settled cards honest ("0.3 MON reclaimed", not "0 MON staked").
+- Default beneficiary is a public-goods address chosen for chain semantics,
+  not sentiment: it must be an EOA, because mainnet multisigs simply don't
+  exist on Monad (see the comment in `CreateCommitmentForm.tsx`).
+
 ## GitHub connection & private repos
 
 Connecting GitHub is step 1 of creating a commitment: an OAuth flow stores
