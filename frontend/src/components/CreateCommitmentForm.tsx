@@ -21,8 +21,6 @@ import { Calendar } from "@/components/ui/Calendar";
 const inputClass =
   "rounded-none border-2 border-line bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted/60 focus:border-primary focus:outline-none";
 const labelClass = "flex flex-col gap-1 text-xs font-mono uppercase tracking-wide text-muted";
-const hours = Array.from({ length: 24 }, (_, hour) => hour);
-const minutes = Array.from({ length: 12 }, (_, minute) => minute * 5);
 // Wallet confirmation + block inclusion eat real time between the client-side
 // check and the contract's own `deadline <= block.timestamp` check — without
 // this buffer, a deadline picked just a few minutes out can race and revert.
@@ -235,12 +233,6 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
     setDeadline(`${format(date, "yyyy-MM-dd")}T${time}`);
   }
 
-  function selectDeadlineTime(hour: number, minute: number) {
-    const date = deadline.split("T")[0];
-    if (!date) return;
-    setDeadline(`${date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`);
-  }
-
   return (
     <WindowCard title="new_commitment.sol" accent="primary">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
@@ -392,61 +384,19 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
                   onSelect={selectDeadlineDate}
                   disabled={{ before: today }}
                 />
-                <div className="mt-3 border-t-2 border-line pt-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[10px] font-mono uppercase tracking-wide text-muted">Time</span>
-                    <span className="font-head text-sm text-primary">
-                      {deadline.split("T")[1] || "--:--"}
-                    </span>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <p className="mb-1 text-[10px] font-mono uppercase tracking-wide text-muted">Hour</p>
-                      <div className="grid grid-cols-6 gap-1">
-                        {hours.map((hour) => {
-                          const active = deadline.split("T")[1]?.slice(0, 2) === String(hour).padStart(2, "0");
-                          return (
-                            <button
-                              key={hour}
-                              type="button"
-                              disabled={!selectedDeadlineDate}
-                              onClick={() => selectDeadlineTime(hour, Number(deadline.split("T")[1]?.slice(3, 5) || 0))}
-                              className={`h-7 cursor-pointer border text-[10px] font-mono transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
-                                active
-                                  ? "border-primary bg-primary text-background"
-                                  : "border-line text-foreground hover:border-primary hover:text-primary"
-                              }`}
-                            >
-                              {String(hour).padStart(2, "0")}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="mb-1 text-[10px] font-mono uppercase tracking-wide text-muted">Minute</p>
-                      <div className="grid grid-cols-3 gap-1">
-                        {minutes.map((minute) => {
-                          const active = deadline.split("T")[1]?.slice(3, 5) === String(minute).padStart(2, "0");
-                          return (
-                            <button
-                              key={minute}
-                              type="button"
-                              disabled={!selectedDeadlineDate}
-                              onClick={() => selectDeadlineTime(Number(deadline.split("T")[1]?.slice(0, 2) || 12), minute)}
-                              className={`h-7 cursor-pointer border text-[10px] font-mono transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
-                                active
-                                  ? "border-primary bg-primary text-background"
-                                  : "border-line text-foreground hover:border-primary hover:text-primary"
-                              }`}
-                            >
-                              {String(minute).padStart(2, "0")}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
+                <div className="mt-3 flex items-center justify-between gap-3 border-t-2 border-line pt-3">
+                  <span className="text-[10px] font-mono uppercase tracking-wide text-muted">Time</span>
+                  <input
+                    type="time"
+                    value={deadline.split("T")[1] || ""}
+                    disabled={!selectedDeadlineDate}
+                    onChange={(e) => {
+                      const date = deadline.split("T")[0];
+                      if (date && e.target.value) setDeadline(`${date}T${e.target.value}`);
+                    }}
+                    className={`${inputClass} [color-scheme:dark] font-mono disabled:cursor-not-allowed disabled:opacity-40`}
+                    aria-label="Deadline time"
+                  />
                 </div>
               </div>
             )}
