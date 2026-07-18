@@ -373,7 +373,7 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
               <div
                 role="dialog"
                 aria-label="Choose deadline date and time"
-                className="absolute left-0 top-full z-30 mt-2 w-fit border-2 border-primary bg-surface p-3 shadow-brutal"
+                className="absolute left-0 top-full z-30 mt-2 w-fit max-w-[calc(100vw-2.5rem)] border-2 border-primary bg-surface p-3 shadow-brutal"
               >
                 <div className="mb-3 flex items-center justify-between border-b-2 border-line pb-2">
                   <span className="font-head text-xs uppercase text-foreground">Set deadline</span>
@@ -399,7 +399,7 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
                       {deadline.split("T")[1] || "--:--"}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <p className="mb-1 text-[10px] font-mono uppercase tracking-wide text-muted">Hour</p>
                       <div className="grid grid-cols-6 gap-1">

@@ -16,7 +16,10 @@ export function Calendar({ className, classNames, showOutsideDays = true, ...pro
       showOutsideDays={showOutsideDays}
       className={cn("border-2 border-line bg-surface p-3 shadow-brutal-sm", className)}
       classNames={{
-        [UI.Months]: "flex flex-col",
+        // relative is load-bearing: the Nav below is absolutely positioned,
+        // and without a positioned ancestor here it escapes to the enclosing
+        // popover — putting the next-month button on top of its close button.
+        [UI.Months]: "relative flex flex-col",
         [UI.Month]: "space-y-2",
         [UI.MonthCaption]: "relative flex h-9 items-center justify-center",
         [UI.CaptionLabel]: "font-head text-sm uppercase tracking-wide text-foreground",
