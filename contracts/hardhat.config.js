@@ -18,4 +18,12 @@ module.exports = {
       accounts: [DEPLOYER_KEY],
     },
   },
+  sourcify: {
+    enabled: true,
+    apiUrl: "https://sourcify-api-monad.blockvision.org",
+    browserUrl: "https://testnet.monadexplorer.com",
+  },
+  etherscan: {
+    enabled: false,
+  },
 };

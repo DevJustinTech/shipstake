@@ -1,0 +1,32 @@
+# Render blueprint — deploys the FastAPI verifier as a persistent web service.
+# In the Render dashboard: New > Blueprint > pick this repo, then fill in the
+# env vars marked sync:false (secrets are never committed here).
+#
+# Free-tier caveat: the instance sleeps after ~15 min of no HTTP traffic,
+# which pauses the 60s auto-verify loop. Point a free uptime pinger
+# (cron-job.org / UptimeRobot) at GET /health every 10 minutes to keep it hot.
+services:
+  - type: web
+    name: shipstake-verifier
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: MONAD_RPC_URL
+        value: https://testnet-rpc.monad.xyz
+      - key: CONTRACT_ADDRESS
+        value: "0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090"
+      - key: DB_PATH
+        value: shipstake.db
+      - key: VERIFIER_PRIVATE_KEY
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false # set to the Vercel URL once the frontend is deployed
