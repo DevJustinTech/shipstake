@@ -1,0 +1,1 @@
+ShipStake — stake MON, ship or lose it. Verified by your GitHub activity, built on Monad.

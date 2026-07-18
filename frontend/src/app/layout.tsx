@@ -3,8 +3,19 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://shipstake.vercel.app"),
   title: "ShipStake",
   description: "Stake MON against your goals. Verified by your GitHub activity.",
+  openGraph: {
+    title: "ShipStake — stake MON, ship or lose it",
+    description:
+      "An onchain commitment device: stake MON against a deadline, verified by your GitHub activity. Ship and reclaim it, or your beneficiary takes it.",
+    url: "https://shipstake.vercel.app",
+    siteName: "ShipStake",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({
