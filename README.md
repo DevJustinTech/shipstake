@@ -12,6 +12,7 @@ Money on the line, verified automatically against something you can't fake
 ## Live deployment
 
 - **App:** https://shipstake.vercel.app
+- **Demo video:** https://shipstake.vercel.app/demo
 - **Verifier backend:** https://shipstake-verifier.onrender.com ([health](https://shipstake-verifier.onrender.com/health))
 - **Contract (Monad testnet, verified source):**
   [`0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090`](https://testnet.monadexplorer.com/address/0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090)
@@ -109,7 +110,7 @@ so you can't lock funds against a repo the verifier will never be able to
 see. Endpoints that use your token require the session secret, so knowing
 someone's GitHub username gets you nothing.
 
-## Known simplifications (say these out loud in the demo, don't hide them)
+## Known simplifications
 
 - The verifier is a single trusted backend wallet, not a decentralized
   oracle. For a 6-day hackathon that's the right tradeoff — a production
@@ -192,26 +193,3 @@ the three `NEXT_PUBLIC_*` env vars from `.env.example`. On Render's free
 tier, point a free uptime pinger (cron-job.org / UptimeRobot) at `/health`
 every 10 minutes so the instance never sleeps through the verify loop.
 
-## Hackathon submission checklist
-
-- [x] Name: ShipStake
-- [x] Description + problem statement: the two paragraphs at the top of this file
-- [x] Hosted project URL: https://shipstake.vercel.app (backend: https://shipstake-verifier.onrender.com)
-- [x] Public GitHub repo: https://github.com/DevJustinTech/shipstake
-- [x] Category: Monad Testnet
-- [x] Contract address: [`0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090`](https://testnet.monadexplorer.com/address/0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090) — source verified via Sourcify
-- [ ] Demo video (≤3 min): record the full loop — create commitment → push a commit to a real repo → auto-verify fires (or hit Verify) → show the checkIn tx on the explorer → withdraw
-- [ ] Social post URL: post the demo video/GIF
-
-## What would make this stand out (if time allows)
-
-- A public leaderboard of "shipped vs. slashed" — feeds the "most viral" prize angle
-- ~~Let the beneficiary be a public goods address as a default option, not just a friend~~
-  — done: the form defaults to the Ethereum Foundation's EthDev wallet (an EOA,
-  deliberately — public-goods multisigs like Protocol Guild only exist as
-  contracts on mainnet, so on Monad funds sent there would be lost)
-- ~~Show the countdown + live GitHub activity feed on the commitment's dashboard card~~
-  — done: active cards tick down live, poll the chain every 15s (so the backend's
-  auto-checkIn flips the card unprompted), and show the verifier's view of the
-  repo — recent commits, newest popping in. Private-repo feeds require the same
-  session secret as every other token-using endpoint.
