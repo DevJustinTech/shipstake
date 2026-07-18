@@ -19,8 +19,10 @@ Money on the line, verified automatically against something you can't fake
 ## How it works
 
 ```
-1. Connect wallet → create a commitment (stake MON, name a beneficiary,
-   set a deadline, describe the goal) → contract locks the funds.
+1. Connect wallet → create a commitment (stake MON, set a deadline,
+   describe the goal) → contract locks the funds. The beneficiary defaults
+   to a public-goods address (the Ethereum Foundation's EthDev wallet — an
+   EOA on purpose, so it exists on Monad too), or pick someone you know.
 2. Frontend registers the commitment with the backend: which GitHub repo
    to watch.
 3. The backend auto-verifies every 60s: it checks the GitHub API for
@@ -28,7 +30,11 @@ Money on the line, verified automatically against something you can't fake
    it calls checkIn() onchain as the trusted verifier wallet. The "Verify"
    button does the same check on demand (nice for demos) — but you never
    *need* to click it, so a forgotten click can't cost you your stake.
-4. Checked in → withdraw your stake back.
+4. The commitment card is live: a ticking countdown, plus the verifier's
+   view of the repo — recent commits appear on the card as you push, and
+   the card polls the chain so the auto check-in flips it to "fulfilled"
+   (with fanfare) without a refresh.
+5. Checked in → withdraw your stake back.
    Deadline passed with no check-in → beneficiary (or anyone, on their
    behalf) claims the stake.
 ```
@@ -62,6 +68,10 @@ someone's GitHub username gets you nothing.
   scope, and tokens are stored in plaintext SQLite on the verifier. A
   production version would use a GitHub App (read-only, per-repo
   installation) and encrypt tokens at rest.
+- The verifier's SQLite lives on Render's free tier with no persistent
+  disk, so every backend deploy resets registrations and GitHub sessions.
+  Fine for a demo (create the commitment after the last deploy); a
+  production version would use a real database.
 - `frontend/package.json` pins `qr` to 0.5.5 via `overrides`: qr@0.6.0
   started rejecting `border: 0`, which crashes the WalletConnect QR code
   inside RainbowKit (`cuer` calls it that way — "invalid border=0" in the
