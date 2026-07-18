@@ -43,3 +43,5 @@ next-env.d.ts
 .vercel
 .env*
 /public/demo.mp4
+/AGENTS.md
+/CLAUDE.md
