@@ -144,5 +144,8 @@ every 10 minutes so the instance never sleeps through the verify loop.
 ## What would make this stand out (if time allows)
 
 - A public leaderboard of "shipped vs. slashed" — feeds the "most viral" prize angle
-- Let the beneficiary be a public goods address (a real charity/DAO) as a default option, not just a friend
+- ~~Let the beneficiary be a public goods address as a default option, not just a friend~~
+  — done: the form defaults to the Ethereum Foundation's EthDev wallet (an EOA,
+  deliberately — public-goods multisigs like Protocol Guild only exist as
+  contracts on mainnet, so on Monad funds sent there would be lost)
 - Show the countdown + live GitHub activity feed on the commitment's dashboard card, so the demo video has something visually alive to point at

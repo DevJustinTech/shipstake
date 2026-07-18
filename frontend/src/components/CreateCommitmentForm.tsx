@@ -27,6 +27,15 @@ const minutes = Array.from({ length: 12 }, (_, minute) => minute * 5);
 // check and the contract's own `deadline <= block.timestamp` check — without
 // this buffer, a deadline picked just a few minutes out can race and revert.
 const MIN_DEADLINE_BUFFER_SECONDS = BigInt(10 * 60);
+// Default beneficiary: losing your stake should still fund something good.
+// Must be an EOA — well-known public-goods multisigs (Protocol Guild, Gitcoin)
+// are contracts that only exist on Ethereum mainnet, so on Monad funds sent
+// there would be unrecoverable. The EF's "EthDev" wallet is a plain EOA, which
+// the same key controls on every EVM chain.
+const PUBLIC_GOODS = {
+  name: "Ethereum Foundation",
+  address: "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe",
+} as const;
 
 export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
   const { isConnected } = useAccount();
@@ -35,6 +44,7 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
   const [repos, setRepos] = useState<RepoOption[]>([]);
   const [reposLoading, setReposLoading] = useState(false);
   const [beneficiary, setBeneficiary] = useState("");
+  const [beneficiaryMode, setBeneficiaryMode] = useState<"publicGoods" | "custom">("publicGoods");
   const [deadline, setDeadline] = useState("");
   const [deadlinePickerOpen, setDeadlinePickerOpen] = useState(false);
   const [stake, setStake] = useState("0.1");
@@ -125,6 +135,7 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
         setDescription("");
         setRepo(null);
         setBeneficiary("");
+        setBeneficiaryMode("publicGoods");
         setDeadline("");
         onCreated();
       } catch (e) {
@@ -144,7 +155,8 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
       setError("Connect your GitHub first");
       return;
     }
-    if (!isAddress(beneficiary)) {
+    const beneficiaryAddress = beneficiaryMode === "publicGoods" ? PUBLIC_GOODS.address : beneficiary;
+    if (!isAddress(beneficiaryAddress)) {
       setError("Beneficiary must be a valid address");
       return;
     }
@@ -187,7 +199,7 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
       address: CONTRACT_ADDRESS,
       abi: COMMITMENT_DEVICE_ABI,
       functionName: "createCommitment",
-      args: [beneficiary as `0x${string}`, deadlineUnix, description],
+      args: [beneficiaryAddress as `0x${string}`, deadlineUnix, description],
       value: parseEther(stake || "0"),
     });
   }
@@ -296,15 +308,50 @@ export function CreateCommitmentForm({ onCreated }: { onCreated: () => void }) {
           </div>
         )}
 
-        <label className={labelClass}>
+        <div className={labelClass}>
           Beneficiary — gets your stake if you miss the deadline
-          <input
-            className={`${inputClass} font-mono`}
-            placeholder="0x..."
-            value={beneficiary}
-            onChange={(e) => setBeneficiary(e.target.value)}
-          />
-        </label>
+          <div className="grid grid-cols-2" role="radiogroup" aria-label="Beneficiary">
+            {(
+              [
+                ["publicGoods", "Public goods"],
+                ["custom", "Someone I know"],
+              ] as const
+            ).map(([mode, title]) => (
+              <button
+                key={mode}
+                type="button"
+                role="radio"
+                aria-checked={beneficiaryMode === mode}
+                onClick={() => setBeneficiaryMode(mode)}
+                className={`cursor-pointer border-2 px-3 py-2 font-mono text-xs uppercase tracking-wide transition-colors ${
+                  beneficiaryMode === mode
+                    ? "border-primary bg-primary text-background"
+                    : "border-line text-muted hover:border-primary hover:text-primary"
+                }`}
+              >
+                {title}
+              </button>
+            ))}
+          </div>
+          {beneficiaryMode === "publicGoods" ? (
+            <div className="flex flex-col gap-1 border-2 border-line bg-surface px-3 py-2 normal-case">
+              <span className="text-sm text-foreground">{PUBLIC_GOODS.name}</span>
+              <span className="break-all text-[11px] text-muted">{PUBLIC_GOODS.address}</span>
+              <span className="text-[11px] tracking-normal text-muted">
+                Miss the deadline and your stake funds Ethereum public goods instead of vanishing
+                into a friend&apos;s wallet.
+              </span>
+            </div>
+          ) : (
+            <input
+              className={`${inputClass} font-mono`}
+              placeholder="0x..."
+              value={beneficiary}
+              onChange={(e) => setBeneficiary(e.target.value)}
+              aria-label="Beneficiary address"
+            />
+          )}
+        </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div ref={deadlinePickerRef} className="relative flex flex-col gap-1">
