@@ -123,6 +123,18 @@ def pop_oauth_state(state: str) -> bool:
     return bool(row) and row[0] >= cutoff
 
 
+def get_unchecked_registrations() -> list[dict]:
+    """Registrations that haven't been checked in yet — the auto-verify
+    loop's work queue."""
+    keys = ["id", "github_owner", "github_repo", "github_author", "token_login", "created_at", "checked_in"]
+    with _conn() as conn:
+        rows = conn.execute(
+            "SELECT id, github_owner, github_repo, github_author, token_login, created_at, checked_in "
+            "FROM commitments WHERE checked_in = 0"
+        ).fetchall()
+    return [dict(zip(keys, row)) for row in rows]
+
+
 def mark_checked_in(commitment_id: int) -> None:
     with _conn() as conn:
         conn.execute("UPDATE commitments SET checked_in = 1 WHERE id = ?", (commitment_id,))

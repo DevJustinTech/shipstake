@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from datetime import datetime
 from urllib.parse import quote, urlencode
 
@@ -28,9 +30,58 @@ app.add_middleware(
 )
 
 
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
+logger = logging.getLogger("shipstake.autoverify")
+
+AUTO_VERIFY_INTERVAL_SECONDS = 60
+
+
 @app.on_event("startup")
-def _startup() -> None:
+async def _startup() -> None:
     storage.init_db()
+    asyncio.create_task(_auto_verify_loop())
+
+
+async def _auto_verify_loop() -> None:
+    """Losing a stake should require NOT shipping — never a missed button
+    click or a briefly-down backend. Sweep all unchecked commitments and
+    check in automatically as soon as GitHub shows activity."""
+    logger.info("auto-verify loop running every %ss", AUTO_VERIFY_INTERVAL_SECONDS)
+    while True:
+        try:
+            await _auto_verify_sweep()
+        except Exception:
+            logger.exception("auto-verify sweep failed; retrying next interval")
+        await asyncio.sleep(AUTO_VERIFY_INTERVAL_SECONDS)
+
+
+async def _auto_verify_sweep() -> None:
+    for reg in storage.get_unchecked_registrations():
+        cid = reg["id"]
+        try:
+            onchain = await asyncio.to_thread(chain.get_commitment, cid)
+            if onchain["status"] != "active":
+                # settled some other way (slashed / manually verified elsewhere)
+                storage.mark_checked_in(cid)
+                continue
+            if datetime.utcnow().timestamp() > onchain["deadline"]:
+                continue  # too late — nothing the verifier can do anymore
+            token = (
+                storage.get_github_token(reg["token_login"]) if reg["token_login"] else None
+            )
+            found = await has_activity_since(
+                reg["github_owner"],
+                reg["github_repo"],
+                datetime.fromisoformat(reg["created_at"]),
+                reg["github_author"],
+                token,
+            )
+            if found:
+                tx_hash = await asyncio.to_thread(chain.submit_check_in, cid)
+                storage.mark_checked_in(cid)
+                logger.info("auto-verified commitment %s (tx %s)", cid, tx_hash)
+        except Exception:
+            logger.exception("auto-verify failed for commitment %s; will retry", cid)
 
 
 @app.get("/auth/github/status")
