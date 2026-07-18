@@ -9,6 +9,13 @@ Personal problem it solves: side projects die from lack of a real deadline.
 Money on the line, verified automatically against something you can't fake
 (commit history), fixes that.
 
+## Live deployment
+
+- **App:** https://shipstake.vercel.app
+- **Verifier backend:** https://shipstake-verifier.onrender.com ([health](https://shipstake-verifier.onrender.com/health))
+- **Contract (Monad testnet, verified source):**
+  [`0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090`](https://testnet.monadexplorer.com/address/0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090)
+
 ## How it works
 
 ```
@@ -114,14 +121,24 @@ cp .env.example .env.local   # contract address + backend URL + a WalletConnect 
 npm run dev
 ```
 
+## Deploying your own
+
+`render.yaml` at the repo root is a Render blueprint for the backend (a
+persistent web service — the 60s auto-verify loop means it can't be
+serverless). The frontend deploys to Vercel as a standard Next.js app with
+the three `NEXT_PUBLIC_*` env vars from `.env.example`. On Render's free
+tier, point a free uptime pinger (cron-job.org / UptimeRobot) at `/health`
+every 10 minutes so the instance never sleeps through the verify loop.
+
 ## Hackathon submission checklist
 
-- [ ] Name: ShipStake (or rename — grep/replace is cheap)
-- [ ] Description + problem statement: use the two paragraphs at the top of this file
-- [ ] Hosted project URL: deploy `frontend/` (Vercel — same flow as the portfolio) + `backend/` (Render/Fly/Railway all have free tiers with a persistent process, which you need since it's not serverless-friendly as-is)
-- [ ] Public GitHub repo: push this folder as a new repo
-- [ ] Contract address: from `npm run deploy:testnet`, link it on https://testnet.monadexplorer.com
-- [ ] Demo video (≤3 min): record the full loop — create commitment → push a commit to a real repo → hit Verify → show the checkIn tx on the explorer → withdraw
+- [x] Name: ShipStake
+- [x] Description + problem statement: the two paragraphs at the top of this file
+- [x] Hosted project URL: https://shipstake.vercel.app (backend: https://shipstake-verifier.onrender.com)
+- [x] Public GitHub repo: https://github.com/DevJustinTech/shipstake
+- [x] Category: Monad Testnet
+- [x] Contract address: [`0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090`](https://testnet.monadexplorer.com/address/0x42CF460E72bBddfe9828f0D5a33fAB0f50d6A090) — source verified via Sourcify
+- [ ] Demo video (≤3 min): record the full loop — create commitment → push a commit to a real repo → auto-verify fires (or hit Verify) → show the checkIn tx on the explorer → withdraw
 - [ ] Social post URL: post the demo video/GIF
 
 ## What would make this stand out (if time allows)
