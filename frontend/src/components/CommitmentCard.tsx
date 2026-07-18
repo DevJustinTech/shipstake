@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Countdown } from "@/components/anim/Countdown";
 import { CheckInBurst } from "@/components/anim/CheckInBurst";
+import { ActivityFeed } from "@/components/ActivityFeed";
 
 const STATUS_BADGE_COLOR: Record<(typeof STATUS_LABEL)[number], "amber" | "lime" | "red" | "muted"> = {
   active: "amber",
@@ -71,6 +72,9 @@ export function CommitmentCard({ id }: { id: number }) {
     abi: COMMITMENT_DEVICE_ABI,
     functionName: "getCommitment",
     args: [BigInt(id)],
+    // The backend auto-verifies without any click from us — poll so its
+    // checkIn() visibly flips this card (and fires the burst) on its own.
+    query: { refetchInterval: 15_000 },
   });
 
   const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract();
@@ -137,6 +141,8 @@ export function CommitmentCard({ id }: { id: number }) {
             {status === "active" && <Countdown deadline={deadline} />}
             {status !== "active" && <span>{deadline.toLocaleString()}</span>}
           </div>
+
+          {(status === "active" || status === "fulfilled") && <ActivityFeed id={id} />}
 
           <div className="flex flex-wrap gap-2 pt-1">
             {status === "active" && !deadlinePassed && (

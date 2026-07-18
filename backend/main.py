@@ -18,7 +18,13 @@ from github_auth import (
     oauth_configured,
     token_for_session,
 )
-from github_check import GitHubCheckError, has_activity_since, list_user_repos, repo_visible
+from github_check import (
+    GitHubCheckError,
+    has_activity_since,
+    list_user_repos,
+    recent_commits,
+    repo_visible,
+)
 
 app = FastAPI(title="ShipStake verifier")
 
@@ -191,6 +197,35 @@ def get_commitment(commitment_id: int) -> dict:
         raise HTTPException(404, "No such commitment")
     registration = storage.get_registration(commitment_id)
     return {"onchain": onchain, "tracking": registration}
+
+
+@app.get("/commitments/{commitment_id}/activity")
+async def activity(
+    commitment_id: int, github_login: str | None = None, session: str | None = None
+) -> dict:
+    """Recent commits the verifier sees for this commitment's repo — feeds the
+    live activity ticker on the frontend card. Same token rule as everywhere
+    else: the stored OAuth token is only used when the caller proves the
+    session, so a guessed commitment id never exposes a private repo's
+    commits. Public repos work with no auth at all."""
+    registration = storage.get_registration(commitment_id)
+    if not registration:
+        raise HTTPException(404, "Commitment was never registered with the verifier")
+    token = _resolve_token(github_login, session)
+    try:
+        commits = await recent_commits(
+            registration["github_owner"],
+            registration["github_repo"],
+            datetime.fromisoformat(registration["created_at"]),
+            registration["github_author"],
+            token,
+        )
+    except GitHubCheckError as e:
+        raise HTTPException(502, str(e))
+    return {
+        "repo": f"{registration['github_owner']}/{registration['github_repo']}",
+        "commits": commits,
+    }
 
 
 @app.post("/commitments/{commitment_id}/verify")

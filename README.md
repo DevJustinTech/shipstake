@@ -148,4 +148,8 @@ every 10 minutes so the instance never sleeps through the verify loop.
   — done: the form defaults to the Ethereum Foundation's EthDev wallet (an EOA,
   deliberately — public-goods multisigs like Protocol Guild only exist as
   contracts on mainnet, so on Monad funds sent there would be lost)
-- Show the countdown + live GitHub activity feed on the commitment's dashboard card, so the demo video has something visually alive to point at
+- ~~Show the countdown + live GitHub activity feed on the commitment's dashboard card~~
+  — done: active cards tick down live, poll the chain every 15s (so the backend's
+  auto-checkIn flips the card unprompted), and show the verifier's view of the
+  repo — recent commits, newest popping in. Private-repo feeds require the same
+  session secret as every other token-using endpoint.
