@@ -1,0 +1,17 @@
+﻿# added for GitHub backup 2026-10-13
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+.env.local
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
